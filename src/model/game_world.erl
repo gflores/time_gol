@@ -1,0 +1,2 @@
+-module(game_world, [Id, Index, Width, Height, Cells]).
+-compile(export_all).

@@ -1,0 +1,2 @@
+-module(world_line_origin, [Id, ParentId, BaseTimeIndex, Width, Height, Cells]).
+-compile(export_all).
