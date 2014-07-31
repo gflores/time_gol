@@ -20,26 +20,25 @@ view('GET', [WorldLineOriginId, TimeIndexStr]) ->
     WorldLineOrigin = case boss_db:find(world_line_origin, [{id, equals, WorldLineOriginId}]) of
         [] ->
             io:format("CREATING world_line_origin~n", []),
-            WorldLineOrigin1 = world_line_origin:new(WorldLineOriginId, no_parent, 0, 3, 3, [true, true, true, true, true, true, true, true, true]),
-            WorldLineOrigin1:save(),
-            WorldLineOrigin1;
+            {ok, CreatedWorldLineOrigin} = (world_line_origin:new(WorldLineOriginId, no_parent, 0, 3, 3, [true, true, true, true, true, true, true, true, true])):save(),
+            CreatedWorldLineOrigin;
         [FoundWorldLineOrigin | _] ->FoundWorldLineOrigin
     end,
     {world_line_origin, WorldLineOriginId, ParentId, BaseTimeIndex, Width, Height, OriginCells} = WorldLineOrigin,
     {Width, Height, Cells} = gol:iterate({Width, Height, OriginCells}, TimeIndex),
-    {json, [{parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells}]}.
+    {json, [{id, WorldLineOriginId}, {parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells}]}.
 
 main('GET', []) ->
     {ok, [{cells, [true, false]}]}.
 
-create('POST', []) ->
+fork('POST', []) ->
     % {struct, Body}= mochijson:decode(Req:request_body()),
     % ParentId = proplists:get_value(<<"parent_id">>,Body,"not_found"),
     % BaseTimeIndex = proplists:get_value(<<"base_time_index">>,Body,"not_found"),
     % Width = proplists:get_value(<<"width">>,Body,"not_found"),
     % Height = proplists:get_value(<<"height">>,Body,"not_found"),
     % Cells = [true,false],%proplists:get_value(<<"cells">>,Body,"not_found"),
-
+    io:format("received: '~p'~n", [mochijson:decode(Req:post_param("json_data"))]),
     {struct, [
         {"parent_id", ParentId},
         {"base_time_index", BaseTimeIndex},
@@ -54,8 +53,17 @@ create('POST', []) ->
     % Height = Req:post_param("height"),
     % Cells = Req:post_param("cells"),
 
-    io:format("CREATING world_line_origin~n", []),
+    io:format("SEARCHING world_line_origin~n", []),
 %    io:format("PARAMS: JsonData: '~p'~n", [JsonData]),
-    {ok, CreatedWorldLineOrigin} = (world_line_origin:new(id, ParentId, BaseTimeIndex, Width, Height, Cells)):save(),
+     WorldLineOrigin = case boss_db:find(world_line_origin, [{parent_id, equals, ParentId}, {cells, equals, Cells}]) of
+        [] ->
+            io:format("CREATING world_line_origin~n", []),
+            {ok, CreatedWorldLineOrigin} = (world_line_origin:new(id, ParentId, BaseTimeIndex, Width, Height, Cells)):save(),
+            CreatedWorldLineOrigin;
+        [FoundWorldLineOrigin | _] ->FoundWorldLineOrigin
+    end,
+    {world_line_origin, WorldLineOriginId, ParentId, BaseTimeIndex, Width, Height, Cells} = WorldLineOrigin,
+
+%    {ok, CreatedWorldLineOrigin} = (world_line_origin:new(id, ParentId, BaseTimeIndex, Width, Height, Cells)):save(),
 %    CreatedWorldLineOrigin:save(),
-    {json, [{id, CreatedWorldLineOrigin:id()}, {width, Width}, {height, Height}, {cells, Cells}]}.
+    {json, [{id, WorldLineOriginId}, {parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells}]}.

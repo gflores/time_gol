@@ -14,7 +14,7 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
         BuildMap: (grid_width, grid_height) ->
             if @grid_width == grid_width and @grid_height == grid_height
                 return
-                console.log("BUILDING MAP !");
+            console.log("BUILDING MAP !");
 
             self = this
             @grid_width = grid_width
@@ -34,7 +34,7 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
 
                             rect.on('click', (evt) ->
                                 self.cells[y * self.grid_width + x] = !self.cells[y * self.grid_width + x]
-                                self.UpdateScreen(self.grid_width, self.grid_height, self.cells)
+                                self.RefreshScreen()
                                 console.log("clicked x: #{x}, y: #{y}")
                             )
                             rect.on('mouseenter', (evt) ->
@@ -72,33 +72,53 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
         HideBioCase: (x, y) ->
             @bioCases[y * @grid_width + x].hide()
             @layerBioCase.batchDraw()
-        UpdateScreen: (grid_width, grid_height, cells, worldline_origin_id, @parent_id, base_time_index, relative_time_index) ->
-            @relative_time_index = relative_time_index
-            @base_time_index = base_time_index
-            @worldline_origin_id = worldline_origin_id
-            @parent_id = parent_id
-            @BuildMap(grid_width, grid_height)
-            @cells = cells
+        RefreshScreen: () ->
             for y in [0..@grid_height - 1]
                 for x in [0..@grid_width - 1]
                     if (@cells[y * @grid_width + x] == true)
                         @DrawBioCase(x, y)
                     else
                         @HideBioCase(x, y)
+
+        UpdateScreen: (data) ->
+            if (data.relative_time_index != undefined)
+                @relative_time_index = data.relative_time_index
+            if (data.base_time_index != undefined)
+                @base_time_index = data.base_time_index
+            if (data.id != undefined)
+                @worldline_origin_id = data.id
+            if (data.parent_id != undefined)
+                @parent_id = data.parent_id
+            @BuildMap(data.width, data.height)
+            if (data.cells != undefined)
+                @cells = data.cells
+            @RefreshScreen()
+
         AsyncUpdate: (worldline_origin_id, relative_time_index) ->
             self = this
             $.ajax("/world_line/view/#{worldline_origin_id}/#{relative_time_index}", {
                 success: (data) ->
-                    self.UpdateScreen(data.width, data.height, data.cells, worldline_origin_id, data.parent_id, data.base_time_index, relative_time_index)
+                    console.log("origin_id #{worldline_origin_id}")
+                    self.UpdateScreen($.extend(data, {relative_time_index: relative_time_index}))
             });
-        CreateAndUploadClone: () ->
-            json_func.CreateOriginPoint({
+        Fork: () ->
+            self = this
+            json_data = JSON.stringify({
                 parent_id: @worldline_origin_id,
-                base_time_index: @base_time_index + @relative_time_index - 1,
-                width: @width,
-                height: @height,
+                base_time_index: @base_time_index + @relative_time_index,
+                width: @grid_width,
+                height: @grid_height,
                 cells: @cells
             })
+            console.log("json_data: #{json_data}");
+            $.post("/world_line/fork", {
+                json_data: json_data
+                },
+                (resp_data) ->
+                    console.log("receive: #{JSON.stringify(resp_data)}");
+                    self.UpdateScreen($.extend(resp_data, {relative_time_index: 0}))
+            );
+
 
     current = new GameScreen()
     return {current: current}
