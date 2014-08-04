@@ -26,8 +26,14 @@ view('GET', [WorldLineOriginId, TimeIndexStr]) ->
     end,
     {world_line_origin, WorldLineOriginId, ParentId, BaseTimeIndex, Width, Height, OriginCells} = WorldLineOrigin,
     {Width, Height, Cells} = gol:iterate({Width, Height, OriginCells}, TimeIndex),
-    {{Year, Month, Day}, _} = erlang:localtime(),
-    {json, [{id, WorldLineOriginId}, {parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells}, {date, [{year, Year}, {month, Month}, {day, Day}]}]}.
+    {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:now_to_universal_time(erlang:now()),
+    {json, [{id, WorldLineOriginId}, {parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells}, {
+        date, [{year, Year}, {month, Month}, {day, Day}, {hour, Hour}, {minute, Minute}, {second, Second}]}]}.
+
+view_current('GET', []) ->
+    {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:now_to_universal_time(erlang:now()),
+    {json, [{
+        date, [{year, Year}, {month, Month}, {day, Day}, {hour, Hour}, {minute, Minute}, {second, Second}]}]}.
 
 main('GET', []) ->
     {ok, [{cells, [true, false]}]}.

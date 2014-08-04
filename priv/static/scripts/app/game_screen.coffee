@@ -89,6 +89,8 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
                 @worldline_origin_id = data.id
             if (data.parent_id != undefined)
                 @parent_id = data.parent_id
+            if (data.universe_name != undefined)
+                AngularUpdateUniverseName(data.universe_name)
             @BuildMap(data.width, data.height)
             if (data.cells != undefined)
                 @cells = data.cells
@@ -96,11 +98,11 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
 
         AsyncUpdate: (worldline_origin_id, relative_time_index) ->
             self = this
-            $.ajax("/world_line/view/#{worldline_origin_id}/#{relative_time_index}", {
-                success: (data) ->
+            $.get("/world_line/view/#{worldline_origin_id}/#{relative_time_index}",
+                (data) ->
                     console.log("origin_id #{worldline_origin_id}")
                     self.UpdateScreen($.extend(data, {relative_time_index: relative_time_index}))
-            });
+            )
         Fork: () ->
             self = this
             json_data = JSON.stringify({
@@ -118,8 +120,24 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
                     console.log("receive: #{JSON.stringify(resp_data)}");
                     self.UpdateScreen($.extend(resp_data, {relative_time_index: 0}))
             );
+        UpdateTime: (delta_time) ->
+            @game_time.setTime(@game_time.getTime() + (delta_time * @time_ratio))
+            @UpdateTimeString()
+        UpdateTimeString: () ->
+            AngularUpdateDate(@game_time.toUTCString())
 
 
     current = new GameScreen()
+    current.time_ratio = 1
+    $.get("/world_line/view_current/",
+        (data) ->
+            date = data.date
+            current.game_time = new Date(Date.UTC(date.year, date.month - 1, date.day, date.hour, date.minute, date.second))
+            current.UpdateTimeString()
+            delta_time = 100
+            window.setInterval( () ->
+                current.UpdateTime(delta_time)
+            , delta_time);
+    )
     return {current: current}
 )
