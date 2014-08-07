@@ -35,7 +35,6 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
                             rect.on('click', (evt) ->
                                 self.cells[y * self.grid_width + x] = !self.cells[y * self.grid_width + x]
                                 self.RefreshScreen()
-                                console.log("clicked x: #{x}, y: #{y}")
                             )
                             rect.on('mouseenter', (evt) ->
                                 $("#container").css('cursor','pointer');

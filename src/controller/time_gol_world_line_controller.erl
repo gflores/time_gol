@@ -20,7 +20,9 @@ view('GET', [WorldLineOriginId, TimeIndexStr]) ->
     WorldLineOrigin = case boss_db:find(world_line_origin, [{id, equals, WorldLineOriginId}]) of
         [] ->
             io:format("CREATING world_line_origin~n", []),
-            {ok, CreatedWorldLineOrigin} = (world_line_origin:new(WorldLineOriginId, no_parent, 0, 3, 3, [true, true, true, true, true, true, true, true, true])):save(),
+            OriginalWidth = 40,
+            OriginalHeight = 40,
+            {ok, CreatedWorldLineOrigin} = (world_line_origin:new(WorldLineOriginId, no_parent, 0, OriginalWidth, OriginalHeight, [true || _ <- lists:seq(1, OriginalWidth* OriginalHeight)])):save(),
             CreatedWorldLineOrigin;
         [FoundWorldLineOrigin | _] ->FoundWorldLineOrigin
     end,
