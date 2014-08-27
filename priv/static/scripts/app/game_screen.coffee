@@ -113,7 +113,7 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
                 (data) ->
                     if (data.before_beginning == true)
                         console.log("before_beginning");
-                        self.time_ratio = 0
+                        self.PressPlayPauseButton()
                         $(".button_backward").hide()
                         $("#fork-section").hide()
                     else
@@ -175,7 +175,15 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
                     $(".kineticjs-content").addClass('green-highlight');
                     $("body").addClass('time-stopped');
                     $("body").removeClass('time-flowing');
-
+        PressPlayPauseButton: ()->
+            if (@time_ratio == 0)
+                $("#play-button").hide()
+                $("#pause-button").show()
+                @time_ratio = 1
+            else
+                $("#pause-button").hide()
+                $("#play-button").show()
+                @time_ratio = 0
 
 
         UpdateTimeString: () ->

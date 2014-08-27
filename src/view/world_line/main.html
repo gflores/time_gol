@@ -18,9 +18,9 @@
     {% endverbatim %}
     </br>
     <div id="time_flowing_control">
-        <button class="button_backward" type="button" onclick="require('cs!app/game_screen').current.time_ratio = -50000"> << </button>
-        <button class="button_forward" type="button" onclick="require('cs!app/game_screen').current.time_ratio = 1"> > </button>
-        <button class="button_forward" type="button" onclick="require('cs!app/game_screen').current.time_ratio = 50000"> >> </button>
+        <button class="button_backward" type="button" onclick="require('cs!app/game_screen').current.time_ratio = -50000"> <img src="/static/images/backward.png" > </button>
+        <button class="button_forward" type="button" onclick="require('cs!app/game_screen').current.PressPlayPauseButton()"> <img id="play-button" src="/static/images/play.png" > <img id="pause-button" src="/static/images/pause.png" > </button>
+        <button class="button_forward" type="button" onclick="require('cs!app/game_screen').current.time_ratio = 50000"> <img src="/static/images/forward.png" > </button>
         <span id="fork-section"> 
             <input id="fork-checkbox" name="fork-checkbox" type="checkbox" /> Fork !
         </span>
