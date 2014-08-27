@@ -1,13 +1,13 @@
 <html lang="en" ng-app="timeGolApp"><head>
 <title>Time Travel Game Of Life</title>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.0/jquery.min.js"></script>
+<script src="/static/scripts/lib/jquery.min.js"></script>
 <script src="/static/scripts/lib/kinetic.js"></script>
-<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.3.0-beta.17/angular.js"></script>
+<script src="/static/scripts/lib/angular.js"></script>
 <script src="/static/scripts/app/controller.js"></script>
 <link rel="stylesheet" href="/static/css/app.css">
 <script data-main="/static/scripts/app" src="/static/scripts/require.js"></script>
  </head>
- <body id="main" ng-controller="mainCtrl">
+ <body id="main" class="time-flowing" ng-controller="mainCtrl">
     {% verbatim %}
       {{universe_name}} Universe
     {% endverbatim %}
@@ -17,8 +17,17 @@
       {{date}}
     {% endverbatim %}
     </br>
-    <button type="button" onclick="require('cs!app/game_screen').current.time_ratio = -50000"> << </button>
-    <button type="button" onclick="require('cs!app/game_screen').current.time_ratio = 1"> > </button>
-    <button type="button" onclick="require('cs!app/game_screen').current.time_ratio = 50000"> >> </button>
+    <div id="time_flowing_control">
+        <button class="button_backward" type="button" onclick="require('cs!app/game_screen').current.time_ratio = -50000"> << </button>
+        <button class="button_forward" type="button" onclick="require('cs!app/game_screen').current.time_ratio = 1"> > </button>
+        <button class="button_forward" type="button" onclick="require('cs!app/game_screen').current.time_ratio = 50000"> >> </button>
+        <span id="fork-section"> 
+            <input id="fork-checkbox" name="fork-checkbox" type="checkbox" /> Fork !
+        </span>
+    </div>
+    <div id="forking_control">
+        <button type="button" onclick="require('cs!app/game_screen').current.Fork()"> Fork ! </button>
+    </div>
+
 </body>
 </html>

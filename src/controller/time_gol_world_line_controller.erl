@@ -24,7 +24,7 @@ view('GET', [WorldLineOriginId, TimeIndexStr]) ->
             OriginalHeight = 40,
             {ok, CreatedWorldLineOrigin} = (world_line_origin:new(WorldLineOriginId, no_parent, 0, OriginalWidth, OriginalHeight, [true || _ <- lists:seq(1, OriginalWidth* OriginalHeight)])):save(),
             CreatedWorldLineOrigin;
-        [FoundWorldLineOrigin | _] ->FoundWorldLineOrigin
+        [FoundWorldLineOrigin | _] -> FoundWorldLineOrigin
     end,
     {world_line_origin, WorldLineOriginId, ParentId, BaseTimeIndex, Width, Height, OriginCells} = WorldLineOrigin,
     {Width, Height, Cells} = gol:iterate({Width, Height, OriginCells}, TimeIndex),
@@ -36,6 +36,51 @@ view_current('GET', []) ->
     {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:now_to_universal_time(erlang:now()),
     {json, [{
         date, [{year, Year}, {month, Month}, {day, Day}, {hour, Hour}, {minute, Minute}, {second, Second}]}]}.
+
+%%%%%
+get_current_state('GET', []) ->
+    {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:now_to_universal_time(erlang:now()),
+    {WorldLineOrigin, TimeIndex} = case saved_date_helper:find_world_beginning_date() of
+        [] ->
+            saved_date_helper:create_world_beginning_date(Year, Month, Day, 12, 0, 0),
+            io:format("CREATING world_line_origin~n", []),
+            OriginalWidth = 40,
+            OriginalHeight = 40,
+            {ok, CreatedWorldLineOrigin} = (world_line_origin:new(id, no_parent, 0, OriginalWidth, OriginalHeight, [true || _ <- lists:seq(1, OriginalWidth* OriginalHeight)])):save(),
+            {CreatedWorldLineOrigin, 0};
+        [BeginningDate | _] ->
+            io:format("FINDING world_line_origin~n", []),
+            [FoundWorldLineOrigin | _] = world_line_helper:find_original_world_line_origin(),
+            {FoundWorldLineOrigin, world_line_helper:date_to_time_index(FoundWorldLineOrigin, {{Year, Month, Day}, {Hour, Minute, Second}})}
+    end,
+    {world_line_origin, WorldLineOriginId, ParentId, BaseTimeIndex, Width, Height, OriginCells} = WorldLineOrigin,
+    io:format("displaying: WorldLineOriginId '~p', TimeIndex '~p' ~n", [WorldLineOriginId, TimeIndex]),
+    {Width, Height, Cells} = gol:iterate({Width, Height, OriginCells}, TimeIndex),
+    {json, [{id, WorldLineOriginId}, {parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells}, {
+        date, [{year, Year}, {month, Month}, {day, Day}, {hour, Hour}, {minute, Minute}, {second, Second}]}, {relative_time_index, TimeIndex}]}.
+
+
+
+
+get_state('GET', [WorldLineOriginId, YearStr, MonthStr, DayStr]) ->
+    {Year, _} = string:to_integer(YearStr),
+    {Month, _} = string:to_integer(MonthStr),
+    {Day, _} = string:to_integer(DayStr),
+    [FoundWorldLineOrigin | _] = boss_db:find(world_line_origin, [{id, equals, WorldLineOriginId}]),
+    FoundTimeIndex = world_line_helper:date_to_time_index(FoundWorldLineOrigin, {{Year, Month, Day}, {0, 0, 0}}),
+
+    case world_line_helper:get_valid_world_line_origin_time_index(FoundWorldLineOrigin, FoundTimeIndex) of
+        {FinalWorldLineOrigin, FinalTimeIndex} ->
+            {world_line_origin, FinalWorldLineOriginId, ParentId, BaseTimeIndex, Width, Height, OriginCells} = FinalWorldLineOrigin,
+            {Width, Height, Cells} = gol:iterate({Width, Height, OriginCells}, FinalTimeIndex),
+            {json, [{id, FinalWorldLineOriginId}, {parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells},
+                {relative_time_index, FinalTimeIndex}]
+            };
+        before_beginning ->
+            io:format("before_beginning~n", []),
+            {json, [{before_beginning, true}]}
+    end.
+
 
 main('GET', []) ->
     {ok, [{cells, [true, false]}]}.
@@ -50,10 +95,14 @@ fork('POST', []) ->
     io:format("received: '~p'~n", [mochijson:decode(Req:post_param("json_data"))]),
     {struct, [
         {"parent_id", ParentId},
-        {"base_time_index", BaseTimeIndex},
+%        {"base_time_index", BaseTimeIndex},
         {"width", Width},
         {"height", Height},
-        {"cells", {array,Cells}}]
+        {"cells", {array,Cells}},
+        {"year", Year},
+        {"month", Month},
+        {"day", Day}
+        ]
     } = mochijson:decode(Req:post_param("json_data")),
 
     % ParentId = Req:post_param("parent_id"),
@@ -67,7 +116,10 @@ fork('POST', []) ->
      WorldLineOrigin = case boss_db:find(world_line_origin, [{parent_id, equals, ParentId}, {cells, equals, Cells}]) of
         [] ->
             io:format("CREATING world_line_origin~n", []),
-            {ok, CreatedWorldLineOrigin} = (world_line_origin:new(id, ParentId, BaseTimeIndex, Width, Height, Cells)):save(),
+            [ParentWorldLineOrigin| _] = boss_db:find(world_line_origin, [{id, equals, ParentId}]),
+            {world_line_origin, ParentId, _, ParentBaseTimeIndex, Width, Height, _} = ParentWorldLineOrigin,
+            TimeIndex = world_line_helper:date_to_time_index(ParentWorldLineOrigin, {{Year, Month, Day}, {0, 0, 0}}),
+            {ok, CreatedWorldLineOrigin} = (world_line_origin:new(id, ParentId, ParentBaseTimeIndex + TimeIndex, Width, Height, Cells)):save(),
             CreatedWorldLineOrigin;
         [FoundWorldLineOrigin | _] ->FoundWorldLineOrigin
     end,
@@ -75,4 +127,5 @@ fork('POST', []) ->
 
 %    {ok, CreatedWorldLineOrigin} = (world_line_origin:new(id, ParentId, BaseTimeIndex, Width, Height, Cells)):save(),
 %    CreatedWorldLineOrigin:save(),
-    {json, [{id, WorldLineOriginId}, {parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells}]}.
+    {json, [{id, WorldLineOriginId}, {parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells},
+        {relative_time_index, 0}]}.

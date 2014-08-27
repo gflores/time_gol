@@ -1,0 +1,2 @@
+-module(saved_date, [Id, Name, Year, Month, Day, Hour, Minute, Second]).
+-compile(export_all).

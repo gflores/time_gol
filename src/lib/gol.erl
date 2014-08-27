@@ -12,7 +12,7 @@ iterate_aux({Width, Height, Cells}, Steps)->
     iterate_aux({Width, Height, NewCells}, Steps - 1).
 
 compute_new_state(Width, Height, Cells) ->
-    compute_new_state_aux([], 0, Width * Height, Width, Height, Cells).
+    lists:reverse(compute_new_state_aux([], 0, Width * Height, Width, Height, Cells)).
 
 compute_new_state_aux(NewCells, CurrentIndex, CurrentIndex, _Width, _Height, _Cells) ->
     NewCells;
