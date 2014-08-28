@@ -88,6 +88,10 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
                     else
                         @HideBioCase(x, y)
 
+        SetUniverseName: (universe_name) ->
+            AngularUpdateUniverseName(universe_name)
+            $("#set-new-name").hide()
+
         UpdateScreen: (data) ->
             if (data.relative_time_index != undefined)
                 @relative_time_index = data.relative_time_index
@@ -97,11 +101,18 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
                 @worldline_origin_id = data.id
             if (data.parent_id != undefined)
                 @parent_id = data.parent_id
-            if (data.universe_name != undefined)
-                AngularUpdateUniverseName(data.universe_name)
+            if (data.is_name_existing == true)
+                console.log("name_existing: #{data.universe_name}")
+                @universe_name = data.universe_name
+                @SetUniverseName(data.universe_name)
+            else
+                $("#set-new-name").show()
+                AngularUpdateUniverseName("")
+
             @BuildMap(data.width, data.height)
             if (data.cells != undefined)
                 @cells = data.cells
+                
             @RefreshScreen()
             console.log("screen updated: id: #{@worldline_origin_id}, parent_id: #{@parent_id}, base_time_index: #{@base_time_index}, relative_time_index: #{@relative_time_index}");
 
@@ -158,6 +169,18 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
                     console.log("receive: #{JSON.stringify(resp_data)}");
                     self.UpdateScreen($.extend(resp_data))
             );
+        UploadName: ()->
+            json_data = JSON.stringify({
+                id: @worldline_origin_id,
+                name: $("#input-name")[0].value
+            })
+            @SetUniverseName($("#input-name")[0].value)
+            $("#input-name")[0].value = ""
+            $.post("/world_line/set_name", {
+                json_data: json_data
+                }
+            )
+            
         UpdateTime: (delta_time) ->
             if (@is_paused == true)
                 return
@@ -184,6 +207,14 @@ define(["cs!app/Funcs/json_func"], (json_func) ->
                 $("#pause-button").hide()
                 $("#play-button").show()
                 @time_ratio = 0
+        SetTimeRatio: (ratio) ->            
+            @time_ratio = ratio
+            if (@time_ratio == 0)
+                $("#pause-button").hide()
+                $("#play-button").show()
+            else
+                $("#play-button").hide()
+                $("#pause-button").show()
 
 
         UpdateTimeString: () ->

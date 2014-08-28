@@ -38,6 +38,7 @@ view_current('GET', []) ->
         date, [{year, Year}, {month, Month}, {day, Day}, {hour, Hour}, {minute, Minute}, {second, Second}]}]}.
 
 %%%%%
+
 get_current_state('GET', []) ->
     {{Year, Month, Day}, {Hour, Minute, Second}} = calendar:now_to_universal_time(erlang:now()),
     {WorldLineOrigin, TimeIndex} = case saved_date_helper:find_world_beginning_date() of
@@ -47,6 +48,8 @@ get_current_state('GET', []) ->
             OriginalWidth = 40,
             OriginalHeight = 40,
             {ok, CreatedWorldLineOrigin} = (world_line_origin:new(id, no_parent, 0, OriginalWidth, OriginalHeight, [true || _ <- lists:seq(1, OriginalWidth* OriginalHeight)])):save(),
+            {world_line_origin, Id, _, _, _, _, _} = CreatedWorldLineOrigin,
+            (world_line_data:new(id, Id, "Original Universe")):save(),
             {CreatedWorldLineOrigin, 0};
         [BeginningDate | _] ->
             io:format("FINDING world_line_origin~n", []),
@@ -56,8 +59,18 @@ get_current_state('GET', []) ->
     {world_line_origin, WorldLineOriginId, ParentId, BaseTimeIndex, Width, Height, OriginCells} = WorldLineOrigin,
     io:format("displaying: WorldLineOriginId '~p', TimeIndex '~p' ~n", [WorldLineOriginId, TimeIndex]),
     {Width, Height, Cells} = gol:iterate({Width, Height, OriginCells}, TimeIndex),
+    {IsNameExisting, Name} = case boss_db:find(world_line_data, [{origin_world_line_id, equals, WorldLineOriginId}]) of
+        [] ->
+            io:format("NO NAME EXISTING ~n", []),
+            {false, "no_name"};
+        [{world_line_data, _, WorldLineOriginId, FoundName}|_] ->
+            io:format("NAME EXISTS: '~p' ~n", [FoundName]),
+            {true, FoundName}
+    end,
+
     {json, [{id, WorldLineOriginId}, {parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells}, {
-        date, [{year, Year}, {month, Month}, {day, Day}, {hour, Hour}, {minute, Minute}, {second, Second}]}, {relative_time_index, TimeIndex}]}.
+        date, [{year, Year}, {month, Month}, {day, Day}, {hour, Hour}, {minute, Minute}, {second, Second}]}, {relative_time_index, TimeIndex},
+        {is_name_existing, IsNameExisting}, {universe_name, Name}]}.
 
 
 
@@ -69,12 +82,22 @@ get_state('GET', [WorldLineOriginId, YearStr, MonthStr, DayStr]) ->
     [FoundWorldLineOrigin | _] = boss_db:find(world_line_origin, [{id, equals, WorldLineOriginId}]),
     FoundTimeIndex = world_line_helper:date_to_time_index(FoundWorldLineOrigin, {{Year, Month, Day}, {0, 0, 0}}),
 
+
     case world_line_helper:get_valid_world_line_origin_time_index(FoundWorldLineOrigin, FoundTimeIndex) of
         {FinalWorldLineOrigin, FinalTimeIndex} ->
+
             {world_line_origin, FinalWorldLineOriginId, ParentId, BaseTimeIndex, Width, Height, OriginCells} = FinalWorldLineOrigin,
+            {IsNameExisting, Name} = case boss_db:find(world_line_data, [{origin_world_line_id, equals, FinalWorldLineOriginId}]) of
+                [] ->
+                    io:format("NO NAME EXISTING ~n", []),
+                    {false, "no_name"};
+                [{world_line_data, _, FinalWorldLineOriginId, FoundName}|_] ->
+                    io:format("NAME EXISTS: '~p' ~n", [FoundName]),
+                    {true, FoundName}
+            end,
             {Width, Height, Cells} = gol:iterate({Width, Height, OriginCells}, FinalTimeIndex),
             {json, [{id, FinalWorldLineOriginId}, {parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells},
-                {relative_time_index, FinalTimeIndex}]
+                {relative_time_index, FinalTimeIndex}, {is_name_existing, IsNameExisting}, {universe_name, Name}]
             };
         before_beginning ->
             io:format("before_beginning~n", []),
@@ -84,6 +107,23 @@ get_state('GET', [WorldLineOriginId, YearStr, MonthStr, DayStr]) ->
 
 main('GET', []) ->
     {ok, [{cells, [true, false]}]}.
+
+set_name('POST', []) ->
+    io:format("received: '~p'~n", [mochijson:decode(Req:post_param("json_data"))]),
+    {struct, [
+        {"id", Id},
+        {"name", Name}
+        ]
+    } = mochijson:decode(Req:post_param("json_data")),
+    case boss_db:find(world_line_data, [{origin_world_line_id, equals, Id}]) of
+        [] ->
+            io:format("NEW NAME ~n", []),
+            (world_line_data:new(id, Id, Name)):save();
+        _ ->
+            io:format("ALREADY EXISTING NAME ~n", [])
+    end,
+    {json, [{ok, true}]}.
+
 
 fork('POST', []) ->
     % {struct, Body}= mochijson:decode(Req:request_body()),
@@ -124,8 +164,16 @@ fork('POST', []) ->
         [FoundWorldLineOrigin | _] ->FoundWorldLineOrigin
     end,
     {world_line_origin, WorldLineOriginId, ParentId, BaseTimeIndex, Width, Height, Cells} = WorldLineOrigin,
+    {IsNameExisting, Name} = case boss_db:find(world_line_data, [{origin_world_line_id, equals, WorldLineOriginId}]) of
+        [] ->
+            io:format("NO NAME EXISTING ~n", []),
+            {false, "no_name"};
+        [{world_line_data, _, WorldLineOriginId, FoundName}|_] ->
+            io:format("NAME EXISTS: '~p' ~n", [FoundName]),
+            {true, FoundName}
+    end,
 
 %    {ok, CreatedWorldLineOrigin} = (world_line_origin:new(id, ParentId, BaseTimeIndex, Width, Height, Cells)):save(),
 %    CreatedWorldLineOrigin:save(),
     {json, [{id, WorldLineOriginId}, {parent_id, ParentId}, {base_time_index, BaseTimeIndex}, {width, Width}, {height, Height}, {cells, Cells},
-        {relative_time_index, 0}]}.
+        {relative_time_index, 0}, {is_name_existing, IsNameExisting}, {universe_name, Name}]}.

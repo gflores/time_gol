@@ -28,7 +28,7 @@
 #container{
     padding: 2%
 }
-button {
+.time_flowing_control button {
     width: 80px;
     height: 40px;
     font-size: 120%;
@@ -41,4 +41,10 @@ button {
 }
 #play-button{
     display: none;
+}
+#input-name{
+    -webkit-text-stroke: initial;
+}
+.default {
+    -webkit-text-stroke: initial;
 }

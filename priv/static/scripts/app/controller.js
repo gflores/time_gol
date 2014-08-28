@@ -9,8 +9,8 @@ phonecatApp.controller('mainCtrl', function ($scope) {
         {'name': 'MOTOROLA XOOM™',
          'snippet': 'The Next, Next Generation tablet.'}
     ]
-    $scope.date = "date"
-    $scope.universe_name = "Totot"
+    $scope.date = ""
+    $scope.universe_name = ""
 
 });
 

@@ -9,8 +9,12 @@
  </head>
  <body id="main" class="time-flowing" ng-controller="mainCtrl">
     {% verbatim %}
-      {{universe_name}} Universe
+      {{universe_name}}
     {% endverbatim %}
+
+    <div id="set-new-name">
+        <input id="input-name" type="text" name="name"> <button class="default" type="button" onclick="require('cs!app/game_screen').current.UploadName()"> Set Name </button>
+    </div>
     <div id="container">
     </div>
     {% verbatim %}
@@ -18,9 +22,9 @@
     {% endverbatim %}
     </br>
     <div id="time_flowing_control">
-        <button class="button_backward" type="button" onclick="require('cs!app/game_screen').current.time_ratio = -50000"> <img src="/static/images/backward.png" > </button>
+        <button class="button_backward" type="button" onclick="require('cs!app/game_screen').current.SetTimeRatio(-50000)"> <img src="/static/images/backward.png" > </button>
         <button class="button_forward" type="button" onclick="require('cs!app/game_screen').current.PressPlayPauseButton()"> <img id="play-button" src="/static/images/play.png" > <img id="pause-button" src="/static/images/pause.png" > </button>
-        <button class="button_forward" type="button" onclick="require('cs!app/game_screen').current.time_ratio = 50000"> <img src="/static/images/forward.png" > </button>
+        <button class="button_forward" type="button" onclick="require('cs!app/game_screen').current.SetTimeRatio(50000)"> <img src="/static/images/forward.png" > </button>
         <span id="fork-section"> 
             <input id="fork-checkbox" name="fork-checkbox" type="checkbox" /> Fork !
         </span>
