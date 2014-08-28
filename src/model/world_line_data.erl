@@ -1,0 +1,2 @@
+-module(world_line_data, [Id, OriginWorldLineId, Name]).
+-compile(export_all).
