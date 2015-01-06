@@ -26,7 +26,7 @@ Just run: `./init-dev.sh`, and you should be able to go to http://localhost:8001
 
 ###Flow Mode
 
-Flow Mode is when you can manipulate time at will, and explore the multiverse.
+Flow Mode is when you can manipulate time and explore the multiverse.
 
 Looks like this:
 
@@ -39,7 +39,7 @@ If you have ticked this: ![alt text](http://puu.sh/do3HZ/5c28fa08b9.png "Fork"),
 
 ###Fork Mode
 
-Fork Mode is when you can manipulate the world itself to create alternate realities.
+Fork Mode is when you can manipulate the world itself in order to create alternate realities.
 
 Looks like this:
 
@@ -50,4 +50,7 @@ Time has stopped, you can click on the dead cells to make them live and click on
 
 Click the Fork button ![alt text](http://puu.sh/do55k/31a1139ee3.png "Fork Button") to create a new world, and you will re-enter Flow Mode.
 
-You can also set the name of the newly created universe: ![alt text](http://puu.sh/do5kE/37e6046335.png "Set Name")
+You can also set a name of the newly created universe: ![alt text](http://puu.sh/do5kE/37e6046335.png "Set Name")
+
+
+Many thanks to Simon Thompson (https://github.com/simonjohnthompson), my supervisor during this project, for his kind support and feedback.
